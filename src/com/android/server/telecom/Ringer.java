@@ -21,6 +21,9 @@ import static android.provider.CallLog.Calls.USER_MISSED_LOW_RING_VOLUME;
 import static android.provider.CallLog.Calls.USER_MISSED_NO_VIBRATE;
 import static android.provider.Settings.Global.ZEN_MODE_OFF;
 
+import android.content.pm.PackageManager;
+import android.hardware.camera2.CameraManager;
+import android.os.AsyncTask;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Person;
@@ -168,6 +171,8 @@ public class Ringer {
 
     private CompletableFuture<Void> mVibrateFuture = CompletableFuture.completedFuture(null);
 
+    private TorchToggler torchToggler;
+
     private InCallTonePlayer mCallWaitingPlayer;
     private RingtoneFactory mRingtoneFactory;
     private AudioManager mAudioManager;
@@ -186,6 +191,7 @@ public class Ringer {
     private boolean mIsVibrating = false;
 
     private Handler mHandler = null;
+    private int torchMode;
 
     /**
      * Use lock different from the Telecom sync because ringing process is asynchronous outside that
@@ -227,6 +233,8 @@ public class Ringer {
 
         mIsHapticPlaybackSupportedByDevice =
                 mSystemSettingsUtil.isHapticPlaybackSupported(mContext);
+
+        torchToggler = new TorchToggler(context);
     }
 
     @VisibleForTesting
@@ -360,6 +368,17 @@ public class Ringer {
             effect = mDefaultVibrationEffect;
         }
 
+        boolean dndMode = !isRingerAudible;
+        torchMode = Settings.System.getIntForUser(mContext.getContentResolver(),
+                 Settings.System.FLASHLIGHT_ON_CALL, 0, UserHandle.USER_CURRENT);
+
+        boolean shouldFlash = (torchMode == 1 && !dndMode) ||
+                              (torchMode == 2 && dndMode)  ||
+                               torchMode == 3;
+        if (shouldFlash) {
+            blinkFlashlight();
+        }
+
         if (hapticsFuture != null) {
             final boolean shouldRingForContact = attributes.shouldRingForContact();
             final boolean isRingerAudible = attributes.isRingerAudible();
@@ -392,6 +411,11 @@ public class Ringer {
         }
 
         return attributes.shouldAcquireAudioFocus();
+    }
+
+    private void blinkFlashlight() {
+        torchToggler = new TorchToggler(mContext);
+        torchToggler.execute();
     }
 
     private void maybeStartVibration(Call foregroundCall, boolean shouldRingForContact,
@@ -492,6 +516,7 @@ public class Ringer {
             }
 
             mRingtonePlayer.stop();
+            torchToggler.stop();
 
             // If we haven't started vibrating because we were waiting for the haptics info, cancel
             // it and don't vibrate at all.
@@ -647,6 +672,48 @@ public class Ringer {
             return mAttributesLatch.await(RINGER_ATTRIBUTES_TIMEOUT, TimeUnit.MILLISECONDS);
         } else {
             return false;
+        }
+    }
+
+    private class TorchToggler extends AsyncTask {
+
+        private boolean shouldStop = false;
+        private CameraManager cameraManager;
+        private int duration = 500;
+        private boolean hasFlash = true;
+        private Context context;
+
+        public TorchToggler(Context ctx) {
+            this.context = ctx;
+            init();
+        }
+
+        private void init() {
+            cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+            hasFlash = context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
+        }
+
+        void stop() {
+            shouldStop = true;
+        }
+
+        @Override
+        protected Object doInBackground(Object[] objects) {
+            if (hasFlash) {
+                try {
+                    String cameraId = cameraManager.getCameraIdList()[0];
+                    while (!shouldStop) {
+                        cameraManager.setTorchMode(cameraId, true);
+                        Thread.sleep(duration);
+
+                        cameraManager.setTorchMode(cameraId, false);
+                        Thread.sleep(duration);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
         }
     }
 }

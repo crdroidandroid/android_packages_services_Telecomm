@@ -48,6 +48,7 @@
     <uses-permission android:name="android.permission.READ_BLOCKED_NUMBERS" />
     <uses-permission android:name="android.permission.WRITE_BLOCKED_NUMBERS" />
     <uses-permission android:name="android.permission.SUBSTITUTE_NOTIFICATION_APP_NAME" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <permission
             android:name="android.permission.BROADCAST_CALLLOG_INFO"
@@ -68,6 +69,8 @@
             android:name="android.permission.PROCESS_PHONE_ACCOUNT_REGISTRATION"
             android:label="Process phone account registration"
             android:protectionLevel="signature|system"/>
+
+    <uses-feature android:name="android.hardware.camera" />
 
     <application android:label="@string/telecommAppLabel"
             android:icon="@mipmap/ic_launcher"

@@ -67,6 +67,7 @@
     <uses-permission android:name="android.permission.ACCESS_LAST_KNOWN_CELL_ID"/>
     <uses-permission android:name="android.permission.STATUS_BAR_SERVICE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_ROUTING" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <permission android:name="android.permission.BROADCAST_CALLLOG_INFO"
          android:label="Broadcast the call type/duration information"
@@ -87,6 +88,8 @@
     <permission android:name="android.permission.HANDLE_CALL_INTENT"
          android:label="Protects handling the call intent via the TelecomManager API."
          android:protectionLevel="signature|system"/>
+
+    <uses-feature android:name="android.hardware.camera" />
 
     <application android:label="@string/telecommAppLabel"
          android:icon="@mipmap/ic_launcher"

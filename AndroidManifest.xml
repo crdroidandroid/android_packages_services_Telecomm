@@ -56,6 +56,7 @@
     <uses-permission android:name="android.permission.READ_BLOCKED_NUMBERS"/>
     <uses-permission android:name="android.permission.WRITE_BLOCKED_NUMBERS"/>
     <uses-permission android:name="android.permission.SUBSTITUTE_NOTIFICATION_APP_NAME"/>
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <permission android:name="android.permission.BROADCAST_CALLLOG_INFO"
          android:label="Broadcast the call type/duration information"
@@ -76,6 +77,8 @@
     <permission android:name="android.permission.HANDLE_CALL_INTENT"
          android:label="Protects handling the call intent via the TelecomManager API."
          android:protectionLevel="signature|system"/>
+
+    <uses-feature android:name="android.hardware.camera" />
 
     <application android:label="@string/telecommAppLabel"
          android:icon="@mipmap/ic_launcher"

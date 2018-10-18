@@ -31,6 +31,7 @@ import android.provider.Settings;
 
 import android.telecom.Log;
 import android.telecom.PhoneAccountHandle;
+import android.telephony.SubscriptionManager;
 import android.text.TextUtils;
 
 import com.android.internal.annotations.VisibleForTesting;
@@ -48,6 +49,11 @@ import java.util.List;
  */
 @VisibleForTesting
 public class RingtoneFactory {
+
+    // Settings.System.RINGTONE2 / DEFAULT_RINGTONE2_URI are @hide, and Telecom is built
+    // against SDK stubs, so mirror them here.
+    private static final String RINGTONE2 = "ringtone2";
+    private static final Uri DEFAULT_RINGTONE2_URI = Settings.System.getUriFor(RINGTONE2);
 
     private final Context mContext;
     private final CallsManager mCallsManager;
@@ -92,18 +98,25 @@ public class RingtoneFactory {
         if (ringtone == null) {
             // Contact didn't specify ringtone or custom Ringtone creation failed. Get default
             // ringtone for user or profile.
-            Context contextToUse = hasDefaultRingtoneForUser(userContext) ? userContext : mContext;
+            final PhoneAccountHandle accountHandle = incomingCall.getTargetPhoneAccount();
+            // Logical SIM slot the call came in on; anything other than 1 uses RINGTONE.
+            final int slotIndex = getSlotIndexForPhoneAccount(accountHandle);
+            Context contextToUse = hasDefaultRingtoneForUser(userContext, slotIndex)
+                    ? userContext : mContext;
             UserManager um = contextToUse.getSystemService(UserManager.class);
             boolean isUserUnlocked = um.isUserUnlocked(contextToUse.getUser());
-            final PhoneAccountHandle accountHandle = incomingCall.getTargetPhoneAccount();
             Uri defaultRingtoneUri;
             if (isUserUnlocked) {
                 if (Flags.supportPerPhoneAccountRingtone()) {
+                    // Falls back to the ringtone of the account's slot when no per-account
+                    // ringtone is set.
                     defaultRingtoneUri = RingtoneManager.getRingtoneUriForPhoneAccountHandle(
                             contextToUse, accountHandle);
                 } else {
-                    defaultRingtoneUri = RingtoneManager.getActualDefaultRingtoneUri(contextToUse,
-                            RingtoneManager.TYPE_RINGTONE);
+                    // Read the slot's setting directly: the public
+                    // getActualDefaultRingtoneUri() follows the default voice SIM, not
+                    // the SIM this call came in on.
+                    defaultRingtoneUri = getRingtoneUriForSlot(contextToUse, slotIndex);
                 }
                 if (defaultRingtoneUri == null) {
                     Log.i(this, "getRingtone: defaultRingtoneUri for user is null.");
@@ -122,9 +135,9 @@ public class RingtoneFactory {
                                     RingtoneManager.PHONE_ACCOUNT_HANDLE_USER_HANDLE,
                                     String.valueOf(accountHandle.getUserHandle().hashCode()))
                             .build()
-                            : Settings.System.DEFAULT_RINGTONE_URI;
+                            : getDefaultRingtoneUriForSlot(slotIndex);
                 } else {
-                    defaultRingtoneUri = Settings.System.DEFAULT_RINGTONE_URI;
+                    defaultRingtoneUri = getDefaultRingtoneUriForSlot(slotIndex);
                     if (defaultRingtoneUri == null) {
                         Log.i(this, "getRingtone: Settings.System.DEFAULT_RINGTONE_URI is null.");
                     }
@@ -212,12 +225,38 @@ public class RingtoneFactory {
         return null;
     }
 
-    private boolean hasDefaultRingtoneForUser(Context userContext) {
+    private boolean hasDefaultRingtoneForUser(Context userContext, int slotIndex) {
         if(userContext == null) {
             return false;
         }
         return !TextUtils.isEmpty(Settings.System.getString(userContext.getContentResolver(),
-                Settings.System.RINGTONE));
+                getRingtoneSettingForSlot(slotIndex)));
+    }
+
+    private static String getRingtoneSettingForSlot(int slotIndex) {
+        return slotIndex == 1 ? RINGTONE2 : Settings.System.RINGTONE;
+    }
+
+    private static Uri getRingtoneUriForSlot(Context context, int slotIndex) {
+        final String uriString = Settings.System.getString(context.getContentResolver(),
+                getRingtoneSettingForSlot(slotIndex));
+        return !TextUtils.isEmpty(uriString) ? Uri.parse(uriString) : null;
+    }
+
+    private int getSlotIndexForPhoneAccount(PhoneAccountHandle accountHandle) {
+        if (accountHandle == null) {
+            return SubscriptionManager.INVALID_SIM_SLOT_INDEX;
+        }
+        final int subId = mCallsManager.getPhoneAccountRegistrar()
+                .getSubscriptionIdForPhoneAccount(accountHandle);
+        if (!SubscriptionManager.isValidSubscriptionId(subId)) {
+            return SubscriptionManager.INVALID_SIM_SLOT_INDEX;
+        }
+        return SubscriptionManager.getSlotIndex(subId);
+    }
+
+    private static Uri getDefaultRingtoneUriForSlot(int slotIndex) {
+        return slotIndex == 1 ? DEFAULT_RINGTONE2_URI : Settings.System.DEFAULT_RINGTONE_URI;
     }
 
     private boolean isWorkContact(Call incomingCall) {

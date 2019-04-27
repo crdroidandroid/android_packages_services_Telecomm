@@ -32,9 +32,12 @@ import android.os.Looper;
 import android.os.RemoteException;
 import android.os.Trace;
 import android.os.UserHandle;
+import android.os.Vibrator;
+import android.provider.Settings;
 import android.telecom.CallAudioState;
 import android.telecom.ConnectionService;
 import android.telecom.DefaultDialerManager;
+import android.telecom.DisconnectCause;
 import android.telecom.InCallService;
 import android.telecom.Log;
 import android.telecom.Logging.Runnable;
@@ -903,6 +906,17 @@ public class InCallController extends CallsManagerListenerBase {
 
     @Override
     public void onCallStateChanged(Call call, int oldState, int newState) {
+        boolean vibrateOnConnect = Settings.System.getIntForUser(mContext.getContentResolver(),
+            Settings.System.VIBRATE_ON_CONNECT, 0, UserHandle.USER_CURRENT) == 1;
+        boolean vibrateOnDisconnect = Settings.System.getIntForUser(mContext.getContentResolver(),
+            Settings.System.VIBRATE_ON_DISCONNECT, 0, UserHandle.USER_CURRENT) == 1; 
+
+        if (oldState == CallState.DIALING && newState == CallState.ACTIVE && vibrateOnConnect) {
+            vibrate(100, 200, 0);
+        } else if (oldState == CallState.ACTIVE && newState == CallState.DISCONNECTED
+                && vibrateOnDisconnect) {
+            vibrate(100, 200, 0);
+        }
         updateCall(call);
     }
 
@@ -1502,5 +1516,12 @@ public class InCallController extends CallsManagerListenerBase {
         }
         childCalls.addAll(parentCalls);
         return childCalls;
+    }
+
+    public void vibrate(int v1, int p1, int v2) {
+        long[] pattern = new long[] {
+            0, v1, p1, v2
+        };
+        ((Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(pattern, -1);
     }
 }

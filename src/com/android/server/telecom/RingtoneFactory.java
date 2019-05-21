@@ -20,6 +20,7 @@ import android.annotation.Nullable;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
+import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.RingtoneManager;
 import android.media.Ringtone;
@@ -54,6 +55,17 @@ public class RingtoneFactory {
         mCallsManager = callsManager;
     }
 
+    /**
+     * Determines if a ringtone has haptic channels.
+     * @param ringtone The ringtone URI.
+     * @return {@code true} if there is a haptic channel, {@code false} otherwise.
+     */
+    public boolean hasHapticChannels(Ringtone ringtone) {
+        boolean hasHapticChannels = RingtoneManager.hasHapticChannels(ringtone.getUri());
+        Log.i(this, "hasHapticChannels %s -> %b", ringtone.getUri(), hasHapticChannels);
+        return hasHapticChannels;
+    }
+
     public Ringtone getRingtone(Call incomingCall,
             @Nullable VolumeShaper.Configuration volumeShaperConfig) {
         // Use the default ringtone of the work profile if the contact is a work profile contact.
@@ -85,7 +97,10 @@ public class RingtoneFactory {
                 contextToUse, defaultRingtoneUri, volumeShaperConfig);
         }
         if (ringtone != null) {
-            ringtone.setStreamType(AudioManager.STREAM_RING);
+            ringtone.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build());
         }
         return ringtone;
     }

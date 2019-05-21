@@ -27,6 +27,7 @@ import android.os.IBinder;
 import android.os.UserHandle;
 import android.telecom.GatewayInfo;
 import android.telecom.PhoneAccountHandle;
+import android.telephony.TelephonyManager;
 import com.android.internal.telecom.ICallRedirectionService;
 import com.android.server.telecom.Call;
 import com.android.server.telecom.CallsManager;
@@ -66,6 +67,7 @@ public class CallRedirectionProcessorTest extends TelecomTestCase {
     @Mock private Call mCall;
 
     @Mock private PackageManager mPackageManager;
+    @Mock private TelephonyManager mTelephonyManager;
     @Mock private IBinder mBinder;
     @Mock private ICallRedirectionService mCallRedirectionService;
 
@@ -118,6 +120,8 @@ public class CallRedirectionProcessorTest extends TelecomTestCase {
                 .thenReturn(CARRIER_SHORT_TIMEOUT_MS);
         when(mCallsManager.getLock()).thenReturn(mLock);
         when(mCallsManager.getCurrentUserHandle()).thenReturn(mUserHandle);
+        when(mContext.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(mTelephonyManager);
+        when(mTelephonyManager.getNetworkCountryIso()).thenReturn("");
         when(mContext.bindServiceAsUser(nullable(Intent.class), nullable(ServiceConnection.class),
                 anyInt(), eq(UserHandle.CURRENT))).thenReturn(true);
     }
@@ -265,8 +269,13 @@ public class CallRedirectionProcessorTest extends TelecomTestCase {
         enableUserDefinedCallRedirectionService();
         enableCarrierCallRedirectionService();
         mProcessor.performCallRedirection();
-        verify(mContext, times(0)).bindServiceAsUser(any(Intent.class),
+        verify(mContext, times(1)).bindServiceAsUser(any(Intent.class),
                 any(ServiceConnection.class), anyInt(), any(UserHandle.class));
+        verify(mCallsManager, times(0)).onCallRedirectionComplete(eq(mCall), any(),
+                eq(mPhoneAccountHandle), eq(null), eq(SPEAKER_PHONE_ON), eq(VIDEO_STATE),
+                eq(false), eq(CallRedirectionProcessor.UI_TYPE_NO_ACTION));
+        waitForHandlerActionDelayed(mProcessor.getHandler(), HANDLER_TIMEOUT_DELAY,
+                CARRIER_SHORT_TIMEOUT_MS + CODE_EXECUTION_DELAY);
         verify(mCallsManager, times(1)).onCallRedirectionComplete(eq(mCall), eq(mHandle),
                 eq(mPhoneAccountHandle), eq(mGatewayInfo), eq(SPEAKER_PHONE_ON), eq(VIDEO_STATE),
                 eq(false), eq(CallRedirectionProcessor.UI_TYPE_NO_ACTION));

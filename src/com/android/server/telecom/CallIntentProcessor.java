@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Looper;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -181,7 +182,9 @@ public class CallIntentProcessor {
             // Show the toast to warn user that it is a personal call though initiated in work
             // profile.
             if (fixedInitiatingUser) {
-                Toast.makeText(context, R.string.toast_personal_call_msg, Toast.LENGTH_LONG).show();
+                Toast.makeText(context, Looper.getMainLooper(),
+                        context.getString(R.string.toast_personal_call_msg),
+                        Toast.LENGTH_LONG).show();
             }
         } else {
             Log.i(CallIntentProcessor.class,

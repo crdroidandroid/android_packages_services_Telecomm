@@ -27,6 +27,7 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.Bundle;
 import android.os.RemoteException;
 import android.telecom.Connection;
 import android.telecom.Log;
@@ -42,6 +43,7 @@ import android.os.UserHandle;
 import android.telecom.TelecomManager;
 
 import com.android.internal.annotations.VisibleForTesting;
+import com.android.internal.telephony.PhoneConstants;
 import com.android.server.telecom.CallsManager.CallsManagerListener;
 
 import java.lang.NumberFormatException;
@@ -278,6 +280,42 @@ public class BluetoothPhoneServiceImpl {
                     Log.endSession();
                 }
             }
+        }
+
+       /**isHighDefCallInProgress
+        * Returns true  if there is any Call is in Progress with High Definition
+        *               quality
+        *         false otherwise.
+        */
+        @Override
+        public boolean isHighDefCallInProgress() {
+            boolean isHighDef = false;
+            Call ringingCall = mCallsManager.getRingingCall();
+            Call dialingCall = mCallsManager.getOutgoingCall();
+            Call activeCall = mCallsManager.getActiveCall();
+
+            /* If its an incoming call we will have codec info in dialing state */
+            if (ringingCall != null) {
+                isHighDef = ringingCall.hasProperty(Connection.PROPERTY_HIGH_DEF_AUDIO);
+            } else if (dialingCall != null) { /* CS dialing call has codec info in dialing state */
+                Bundle extras = dialingCall.getExtras();
+                if (extras != null) {
+                    int phoneType = extras.getInt(
+                        TelecomManager.EXTRA_CALL_TECHNOLOGY_TYPE);
+                    if (phoneType == PhoneConstants.PHONE_TYPE_GSM
+                        || phoneType == PhoneConstants.PHONE_TYPE_CDMA) {
+                        isHighDef = dialingCall.hasProperty(Connection.PROPERTY_HIGH_DEF_AUDIO);
+                    /* For IMS calls codec info is not present in dialing state */
+                    } else if (phoneType == PhoneConstants.PHONE_TYPE_IMS
+                        || phoneType == PhoneConstants.PHONE_TYPE_CDMA_LTE) {
+                        isHighDef = true;
+                    }
+                }
+            } else if (activeCall != null) {
+                isHighDef = activeCall.hasProperty(Connection.PROPERTY_HIGH_DEF_AUDIO);
+            }
+            Log.i(TAG, "isHighDefCallInProgress: Call is High Def " + isHighDef);
+            return isHighDef;
         }
 
         @Override
@@ -645,7 +683,7 @@ public class BluetoothPhoneServiceImpl {
      */
     private void sendClccForCall(Call call, boolean shouldLog) {
         boolean isForeground = mCallsManager.getForegroundCall() == call;
-        int state = convertCallState(call.getState(), isForeground);
+        int state = getBtCallState(call, isForeground);
         boolean isPartOfConference = false;
         boolean isConferenceWithNoChildren = call.isConference() && call
                 .can(Connection.CAPABILITY_CONFERENCE_HAS_NO_CHILDREN);
@@ -769,7 +807,8 @@ public class BluetoothPhoneServiceImpl {
         String ringingAddress = null;
         int ringingAddressType = 128;
         String ringingName = null;
-        if (ringingCall != null && ringingCall.getHandle() != null) {
+        if (ringingCall != null && ringingCall.getHandle() != null
+            && !ringingCall.isSilentRingingRequested()) {
             ringingAddress = ringingCall.getHandle().getSchemeSpecificPart();
             if (ringingAddress != null) {
                 ringingAddressType = PhoneNumberUtils.toaFromString(ringingAddress);
@@ -902,7 +941,6 @@ public class BluetoothPhoneServiceImpl {
     }
 
     private int getBluetoothCallStateForUpdate() {
-        CallsManager callsManager = mCallsManager;
         Call ringingCall = mCallsManager.getRingingCall();
         Call dialingCall = mCallsManager.getOutgoingCall();
         boolean hasOnlyDisconnectedCalls = mCallsManager.hasOnlyDisconnectedCalls();
@@ -917,9 +955,9 @@ public class BluetoothPhoneServiceImpl {
         // bluetooth devices (like not getting out of ringing state after answering a call).
         //
         int bluetoothCallState = CALL_STATE_IDLE;
-        if (ringingCall != null) {
+        if (ringingCall != null && !ringingCall.isSilentRingingRequested()) {
             bluetoothCallState = CALL_STATE_INCOMING;
-        } else if (dialingCall != null) {
+        } else if (dialingCall != null && dialingCall.getState() == CallState.DIALING) {
             bluetoothCallState = CALL_STATE_ALERTING;
         } else if (hasOnlyDisconnectedCalls || mIsDisconnectedTonePlaying) {
             // Keep the DISCONNECTED state until the disconnect tone's playback is done
@@ -928,8 +966,8 @@ public class BluetoothPhoneServiceImpl {
         return bluetoothCallState;
     }
 
-    private int convertCallState(int callState, boolean isForegroundCall) {
-        switch (callState) {
+    private int getBtCallState(Call call, boolean isForeground) {
+        switch (call.getState()) {
             case CallState.NEW:
             case CallState.ABORTED:
             case CallState.DISCONNECTED:
@@ -956,7 +994,9 @@ public class BluetoothPhoneServiceImpl {
 
             case CallState.RINGING:
             case CallState.ANSWERED:
-                if (isForegroundCall) {
+                if (call.isSilentRingingRequested()) {
+                    return CALL_STATE_IDLE;
+                } else if (isForeground) {
                     return CALL_STATE_INCOMING;
                 } else {
                     return CALL_STATE_WAITING;

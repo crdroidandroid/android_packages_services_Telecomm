@@ -392,19 +392,27 @@ public class TelecomServiceImpl {
         }
 
         @Override
-        public PhoneAccountHandle getSimCallManager() {
-            try {
-                Log.startSession("TSI.gSCM");
-                long token = Binder.clearCallingIdentity();
-                int user;
+        public PhoneAccountHandle getSimCallManager(int subId) {
+            synchronized (mLock) {
                 try {
-                    user = ActivityManager.getCurrentUser();
-                    return getSimCallManagerForUser(user);
+                    Log.startSession("TSI.gSCM");
+                    final int callingUid = Binder.getCallingUid();
+                    final int user = UserHandle.getUserId(callingUid);
+                    long token = Binder.clearCallingIdentity();
+                    try {
+                        if (user != ActivityManager.getCurrentUser()) {
+                            enforceCrossUserPermission(callingUid);
+                        }
+                        return mPhoneAccountRegistrar.getSimCallManager(subId, UserHandle.of(user));
+                    } finally {
+                        Binder.restoreCallingIdentity(token);
+                    }
+                } catch (Exception e) {
+                    Log.e(this, e, "getSimCallManager");
+                    throw e;
                 } finally {
-                    Binder.restoreCallingIdentity(token);
+                    Log.endSession();
                 }
-            } finally {
-                Log.endSession();
             }
         }
 
@@ -1797,6 +1805,11 @@ public class TelecomServiceImpl {
         }
 
         if (call != null) {
+            if (call.isEmergencyCall()) {
+                android.util.EventLog.writeEvent(0x534e4554, "132438333", -1, "");
+                return false;
+            }
+
             if (call.getState() == CallState.RINGING) {
                 call.reject(false /* rejectWithMessage */, null, callingPackage);
             } else {

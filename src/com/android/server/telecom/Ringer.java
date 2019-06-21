@@ -208,6 +208,14 @@ public class Ringer {
             return false;
         }
 
+        if (foregroundCall.getState() != CallState.RINGING) {
+            // Its possible for bluetooth to connect JUST as a call goes active, which would mean
+            // the call would start ringing again.
+            Log.i(this, "startRinging called for non-ringing foreground callid=%s",
+                    foregroundCall.getId());
+            return false;
+        }
+
         AudioManager audioManager =
                 (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         boolean isVolumeOverZero = audioManager.getStreamVolume(AudioManager.STREAM_RING) > 0;
@@ -273,11 +281,11 @@ public class Ringer {
                     mSystemSettingsUtil.getRampingRingerVibrationDuration() >= 0
                     ? mSystemSettingsUtil.getRampingRingerVibrationDuration() / 1000
                     : 0;
-                if (mRampingRingerVibrationDuration != previousRampingRingerVibrationDuration) {
-                    mRampingRingerVibrationEffect =
-                        createRampingRingerVibrationEffect(mRampingRingerVibrationDuration);
+                if (mSystemSettingsUtil.enableAudioCoupledVibrationForRampingRinger()) {
+                    effect = getVibrationEffectForCall(mRingtoneFactory, foregroundCall);
+                } else {
+                    effect = mDefaultVibrationEffect;
                 }
-                effect = mRampingRingerVibrationEffect;
 
                 // configure volume shaper for ramping ringer
                 int previousRampingRingerDuration = mRampingRingerDuration;
@@ -355,7 +363,7 @@ public class Ringer {
                     && mSystemSettingsUtil.enableRampingRingerFromDeviceConfig()
                     && isRingerAudible) {
                 Log.i(this, "start vibration for ramping ringer.");
-                mVibrator.vibrate(effect);
+                mVibrator.vibrate(effect, VIBRATION_ATTRIBUTES);
                 mIsVibrating = true;
             } else {
                 Log.i(this, "start normal vibration.");
@@ -365,34 +373,6 @@ public class Ringer {
         } else if (mIsVibrating) {
             Log.addEvent(foregroundCall, LogUtils.Events.SKIP_VIBRATION, "already vibrating");
         }
-    }
-
-    private VibrationEffect createRampingRingerVibrationEffect(int vibrationSeconds) {
-        if (vibrationSeconds < 1) {  // vibration duration has to be at least 1 second long.
-            return null;
-        }
-        List<Long> rampingRingerVibrationPatternList = new ArrayList<>();
-        List<Integer> rampingRingerVibrationAmplitudeList = new ArrayList<>();
-        while (vibrationSeconds > 0) {
-            rampingRingerVibrationPatternList.addAll(
-                Arrays.stream(PULSE_RAMPING_PATTERN).boxed().collect(Collectors.toList()));
-            rampingRingerVibrationAmplitudeList.addAll(
-                Arrays.stream(PULSE_RAMPING_AMPLITUDE).boxed().collect(Collectors.toList()));
-            vibrationSeconds -= 2;
-        }
-        // remove the last second of pause
-        if (vibrationSeconds < 0) {
-            rampingRingerVibrationPatternList.remove(
-                rampingRingerVibrationPatternList.size() - 1);
-            rampingRingerVibrationAmplitudeList.remove(
-                rampingRingerVibrationAmplitudeList.size() - 1);
-        }
-        long[] rampingRingerVibrationPatternArray =
-            rampingRingerVibrationPatternList.stream().mapToLong(i -> i).toArray();
-        int[] rampingRingerVibrationAmplitudeArray =
-            rampingRingerVibrationAmplitudeList.stream().mapToInt(i -> i).toArray();
-        return VibrationEffect.createWaveform(rampingRingerVibrationPatternArray,
-            rampingRingerVibrationAmplitudeArray, -1 /* not repeat */);
     }
 
     private VibrationEffect getVibrationEffectForCall(RingtoneFactory factory, Call call) {

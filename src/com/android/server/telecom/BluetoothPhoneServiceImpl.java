@@ -109,12 +109,13 @@ public class BluetoothPhoneServiceImpl {
                 Log.startSession("BPSI.aC");
                 long token = Binder.clearCallingIdentity();
                 try {
-                    Log.i(TAG, "BT - answering call");
-                    Call call = mCallsManager.getRingingCall();
+                    Log.i(TAG, "BT - answering call isAnswercallInProgress "
+                              + isAnswercallInProgress );
+                    Call call = mCallsManager.getFirstCallWithState(CallState.RINGING);
                     if (call != null) {
                         if (!isAnswercallInProgress) {
                             mCallsManager.answerCall(call, VideoProfile.STATE_AUDIO_ONLY);
-                            Log.i(TAG, "isAnswercallInProgress:" + isAnswercallInProgress);
+                            Log.i(TAG, "Making isAnswercallInProgress to true");
                             isAnswercallInProgress = true;
                         }
                         return true;
@@ -399,8 +400,20 @@ public class BluetoothPhoneServiceImpl {
             }
 
             if (oldState == CallState.RINGING && newState != oldState) {
-                Log.i(TAG, "making flag isAnswercallInProgress from true to false:");
+                Log.i(TAG, "making flag isAnswercallInProgress to false");
                 isAnswercallInProgress = false;
+
+                /* When one active call, one RINGING call is present, AT+CHLD=1
+                 * ends active call. RINGING call moves to ANSWERED state. This
+                 * will make BT to update headset that no call is present and
+                 * close SCO. SCO will not be created when call moves to ACTIVE
+                 * state since SCO disconnection may not complete by then.
+                 * Ignore ANSWERED update and update to BT only when call
+                 * moves to ACTIVE state */
+                if (newState == CallState.ANSWERED) {
+                    Log.w(TAG, "ignoring call update from RINGING->ANSWERED state");
+                    return;
+                }
             }
             // If a call is being put on hold because of a new connecting call, ignore the
             // CONNECTING since the BT state update needs to send out the numHeld = 1 + dialing
@@ -580,7 +593,7 @@ public class BluetoothPhoneServiceImpl {
 
     private boolean processChld(int chld) {
         Call activeCall = mCallsManager.getActiveCall();
-        Call ringingCall = mCallsManager.getRingingCall();
+        Call ringingCall = mCallsManager.getFirstCallWithState(CallState.RINGING);
         Call heldCall = mCallsManager.getHeldCall();
 
         // TODO: Keeping as Log.i for now.  Move to Log.d after L release if BT proves stable.
@@ -595,6 +608,7 @@ public class BluetoothPhoneServiceImpl {
                 return true;
             }
         } else if (chld == CHLD_TYPE_RELEASEACTIVE_ACCEPTHELD) {
+            Log.i(TAG, "CHLD=1: isAnswercallInProgress:" + isAnswercallInProgress);
             if (activeCall == null && ringingCall == null && heldCall == null)
                 return false;
             if (activeCall != null) {
@@ -602,7 +616,7 @@ public class BluetoothPhoneServiceImpl {
                 if (ringingCall != null) {
                     if (!isAnswercallInProgress) {
                         mCallsManager.answerCall(ringingCall, VideoProfile.STATE_AUDIO_ONLY);
-                        Log.i(TAG, "CHLD = 1 :isAnswercallInProgress:" + isAnswercallInProgress);
+                        Log.i(TAG, "making isAnswercallInProgress to true");
                         isAnswercallInProgress = true;
                     }
                 }
@@ -611,8 +625,8 @@ public class BluetoothPhoneServiceImpl {
             if (ringingCall != null) {
                 if (!isAnswercallInProgress) {
                     mCallsManager.answerCall(ringingCall, ringingCall.getVideoState());
-                    Log.i(TAG, "CHLD = 1 :There is ringing call: isAnswercallInProgress:" +
-                                         isAnswercallInProgress);
+                    Log.i(TAG, "CHLD=1: There is ringing call making "
+                              + "isAnswercallInProgress to true:");
                     isAnswercallInProgress = true;
                 }
             } else if (heldCall != null) {
@@ -620,6 +634,7 @@ public class BluetoothPhoneServiceImpl {
             }
             return true;
         } else if (chld == CHLD_TYPE_HOLDACTIVE_ACCEPTHELD) {
+            Log.i(TAG, "CHLD=2: isAnswercallInProgress:" + isAnswercallInProgress);
             if (activeCall != null && activeCall.can(Connection.CAPABILITY_SWAP_CONFERENCE)) {
                 activeCall.swapConference();
                 Log.i(TAG, "CDMA calls in conference swapped, updating headset");
@@ -628,7 +643,8 @@ public class BluetoothPhoneServiceImpl {
             } else if (ringingCall != null) {
                 if (!isAnswercallInProgress) {
                     mCallsManager.answerCall(ringingCall, VideoProfile.STATE_AUDIO_ONLY);
-                    Log.i(TAG, "CHLD = 2: isAnswercallInProgress:" + isAnswercallInProgress);
+                    Log.i(TAG, "ringing call is present, making isAnswercallInProgress "
+                           + "to true");
                     isAnswercallInProgress = true;
                 }
                 return true;
@@ -799,6 +815,8 @@ public class BluetoothPhoneServiceImpl {
      */
     private void updateHeadsetWithCallState(boolean force) {
         Call activeCall = mCallsManager.getActiveCall();
+
+        /* Treat ANSWERED state call also as ringing call as BT is not aware of this state */
         Call ringingCall = mCallsManager.getRingingCall();
         Call heldCall = mCallsManager.getHeldCall();
 
@@ -941,6 +959,8 @@ public class BluetoothPhoneServiceImpl {
     }
 
     private int getBluetoothCallStateForUpdate() {
+        /* getRingingCall() gets call in RINGING and ANSWERED state. Update BT
+         * about ANSWERED call also as RINGING as BT is not aware of this state */
         Call ringingCall = mCallsManager.getRingingCall();
         Call dialingCall = mCallsManager.getOutgoingCall();
         boolean hasOnlyDisconnectedCalls = mCallsManager.hasOnlyDisconnectedCalls();

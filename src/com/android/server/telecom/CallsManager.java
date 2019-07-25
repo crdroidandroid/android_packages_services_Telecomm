@@ -1889,7 +1889,15 @@ public class CallsManager extends Call.ListenerBase
             confirmIntent.putExtra(CallRedirectionConfirmDialogActivity.EXTRA_REDIRECTION_APP_NAME,
                     mRoleManagerAdapter.getApplicationLabelForPackageName(callRedirectionApp));
             confirmIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivityAsUser(confirmIntent, UserHandle.CURRENT);
+
+            // A small delay to start the activity after any Dialer's In Call UI starts
+            mHandler.postDelayed(new Runnable("CM.oCRC", mLock) {
+                @Override
+                public void loggedRun() {
+                    mContext.startActivityAsUser(confirmIntent, UserHandle.CURRENT);
+                }
+            }.prepare(), 500 /* Milliseconds delay */);
+
         } else {
             call.setTargetPhoneAccount(phoneAccountHandle);
             placeOutgoingCall(call, handle, gatewayInfo, speakerphoneOn, videoState);
@@ -1916,7 +1924,7 @@ public class CallsManager extends Call.ListenerBase
             mPendingUnredirectedOutgoingCallInfo.remove(callId);
         } else {
             Log.w(this, "processRedirectedOutgoingCallAfterUserInteraction for non-matched Call ID"
-                    + " %s with handle %s and phoneAccountHandle %s", callId);
+                    + " %s", callId);
         }
     }
 
@@ -2945,6 +2953,8 @@ public class CallsManager extends Call.ListenerBase
 
         setCallState(call, Call.getStateFromConnectionState(parcelableConference.getState()),
                 "new conference call");
+        call.setHandle(parcelableConference.getHandle(),
+                parcelableConference.getHandlePresentation());
         call.setConnectionCapabilities(parcelableConference.getConnectionCapabilities());
         call.setConnectionProperties(parcelableConference.getConnectionProperties());
         call.setVideoState(parcelableConference.getVideoState());
@@ -3663,7 +3673,7 @@ public class CallsManager extends Call.ListenerBase
                 null /* gatewayInfo */,
                 null /* connectionManagerPhoneAccount */,
                 connection.getPhoneAccount(), /* targetPhoneAccountHandle */
-                Call.CALL_DIRECTION_UNDEFINED /* callDirection */,
+                Call.getRemappedCallDirection(connection.getCallDirection()) /* callDirection */,
                 false /* forceAttachToExistingConnection */,
                 isDowngradedConference /* isConference */,
                 connection.getConnectTimeMillis() /* connectTimeMillis */,

@@ -399,6 +399,7 @@ public class BluetoothPhoneServiceImpl {
                 return;
             }
 
+            Log.i(TAG, "onCallStateChanged oldState: " + oldState + " newState " + newState);
             if (oldState == CallState.RINGING && newState != oldState) {
                 Log.i(TAG, "making flag isAnswercallInProgress to false");
                 isAnswercallInProgress = false;
@@ -432,8 +433,8 @@ public class BluetoothPhoneServiceImpl {
             // state. We can assume that the active call will be automatically held which will
             // send another update at which point we will be in the right state.
             if (mCallsManager.getActiveCall() != null
-                    && oldState == CallState.CONNECTING &&
-                    (newState == CallState.DIALING || newState == CallState.PULLING)) {
+                    && oldState == CallState.CONNECTING
+                    && newState == CallState.PULLING) {
                 return;
             }
             updateHeadsetWithCallState(false /* force */);

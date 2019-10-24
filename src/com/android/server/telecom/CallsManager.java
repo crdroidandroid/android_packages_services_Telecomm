@@ -1141,9 +1141,10 @@ public class CallsManager extends Call.ListenerBase
                 call.setIsVoipAudioMode(true);
             }
         }
-        if (isRttSettingOn() ||
+        if (isRttSettingOn(phoneAccountHandle) ||
                 extras.getBoolean(TelecomManager.EXTRA_START_CALL_WITH_RTT, false)) {
-            Log.i(this, "Incoming call requesting RTT, rtt setting is %b", isRttSettingOn());
+            Log.i(this, "Incoming call requesting RTT, rtt setting is %b",
+                    isRttSettingOn(phoneAccountHandle));
             call.createRttStreams();
             // Even if the phone account doesn't support RTT yet, the connection manager might
             // change that. Set this to check it later.
@@ -1606,11 +1607,12 @@ public class CallsManager extends Call.ListenerBase
                     if (!isVoicemail && (!VideoProfile.isVideo(callToUse.getVideoState())
                             || QtiImsExtUtils.isRttSupportedOnVtCalls(
                             phoneId, mContext))
-                            && (isRttSettingOn() || (extras != null
+                            && (isRttSettingOn(callToUse.getTargetPhoneAccount())
+                            || (extras != null
                             && extras.getBoolean(TelecomManager.EXTRA_START_CALL_WITH_RTT,
                             false)))) {
                         Log.d(this, "Outgoing call requesting RTT, rtt setting is %b",
-                                isRttSettingOn());
+                                isRttSettingOn(callToUse.getTargetPhoneAccount()));
                         if (callToUse.isEmergencyCall() || (accountToUse != null
                                 && accountToUse.hasCapabilities(PhoneAccount.CAPABILITY_RTT))) {
                             // If the call requested RTT and it's an emergency call, ignore the
@@ -2441,9 +2443,19 @@ public class CallsManager extends Call.ListenerBase
         mProximitySensorManager.turnOff(screenOnImmediately);
     }
 
-    private boolean isRttSettingOn() {
+    private boolean isRttSettingOn(PhoneAccountHandle accountHandle) {
+        int phoneId = SubscriptionManager.getPhoneId(
+                mPhoneAccountRegistrar.getSubscriptionIdForPhoneAccount(accountHandle));
+        if (!SubscriptionManager.isValidPhoneId(phoneId)) {
+            Log.w(this, "isRttSettingOn: Invalid phone id = " + phoneId);
+            return false;
+        }
         return Settings.Secure.getInt(mContext.getContentResolver(),
-                Settings.Secure.RTT_CALLING_MODE, 0) != 0;
+                Settings.Secure.RTT_CALLING_MODE + convertRttPhoneId(phoneId), 0) != 0;
+    }
+
+    private static String convertRttPhoneId(int phoneId) {
+        return phoneId != 0 ? Integer.toString(phoneId) : "";
     }
 
     void phoneAccountSelected(Call call, PhoneAccountHandle account, boolean setDefault) {

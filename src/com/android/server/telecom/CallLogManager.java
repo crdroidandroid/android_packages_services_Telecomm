@@ -40,6 +40,8 @@ import android.telephony.PhoneNumberUtils;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.telephony.CallerInfo;
 
+import org.lineageos.internal.phone.SensitivePhoneNumbers;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -143,7 +145,7 @@ public final class CallLogManager extends CallsManagerListenerBase {
         mPhoneAccountRegistrar = phoneAccountRegistrar;
         mMissedCallNotifier = missedCallNotifier;
         mLock = new Object();
-        mSensitivePhoneNumbers = new SensitivePhoneNumbers();
+        mSensitivePhoneNumbers = SensitivePhoneNumbers.getInstance();
     }
 
     @Override

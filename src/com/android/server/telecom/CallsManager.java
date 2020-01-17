@@ -35,6 +35,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -1142,10 +1143,11 @@ public class CallsManager extends Call.ListenerBase
                 call.setIsVoipAudioMode(true);
             }
         }
-        if (isRttSettingOn(phoneAccountHandle) ||
+
+        boolean isRttSettingOn = isRttSettingOn(phoneAccountHandle);
+        if (isRttSettingOn ||
                 extras.getBoolean(TelecomManager.EXTRA_START_CALL_WITH_RTT, false)) {
-            Log.i(this, "Incoming call requesting RTT, rtt setting is %b",
-                    isRttSettingOn(phoneAccountHandle));
+            Log.i(this, "Incoming call requesting RTT, rtt setting is %b", isRttSettingOn);
             call.createRttStreams();
             // Even if the phone account doesn't support RTT yet, the connection manager might
             // change that. Set this to check it later.
@@ -1602,18 +1604,19 @@ public class CallsManager extends Call.ListenerBase
 
                     boolean isVoicemail = isVoicemail(callToUse.getHandle(), accountToUse);
 
+                    boolean isRttSettingOn = isRttSettingOn(callToUse.getTargetPhoneAccount());
                     int phoneId = SubscriptionManager.getPhoneId(
                             mPhoneAccountRegistrar.getSubscriptionIdForPhoneAccount(
                             callToUse.getTargetPhoneAccount()));
                     if (!isVoicemail && (!VideoProfile.isVideo(callToUse.getVideoState())
                             || QtiImsExtUtils.isRttSupportedOnVtCalls(
                             phoneId, mContext))
-                            && (isRttSettingOn(callToUse.getTargetPhoneAccount())
+                            && (isRttSettingOn
                             || (extras != null
                             && extras.getBoolean(TelecomManager.EXTRA_START_CALL_WITH_RTT,
                             false)))) {
                         Log.d(this, "Outgoing call requesting RTT, rtt setting is %b",
-                                isRttSettingOn(callToUse.getTargetPhoneAccount()));
+                                isRttSettingOn);
                         if (callToUse.isEmergencyCall() || (accountToUse != null
                                 && accountToUse.hasCapabilities(PhoneAccount.CAPABILITY_RTT))) {
                             // If the call requested RTT and it's an emergency call, ignore the
@@ -2258,6 +2261,11 @@ public class CallsManager extends Call.ListenerBase
         if (!mCalls.contains(call)) {
             Log.w(this, "Unknown call (%s) asked to be removed from hold", call);
         } else {
+            if (getOutgoingCall() != null) {
+                Log.w(this, "There is an outgoing call, so it is unable to unhold this call %s",
+                        call);
+                return;
+            }
             Call activeCall = (Call) mConnectionSvrFocusMgr.getCurrentFocusCall();
             String activeCallId = null;
             if (activeCall != null && !activeCall.isLocallyDisconnecting()) {
@@ -2444,15 +2452,28 @@ public class CallsManager extends Call.ListenerBase
         mProximitySensorManager.turnOff(screenOnImmediately);
     }
 
-    private boolean isRttSettingOn(PhoneAccountHandle accountHandle) {
+    private boolean isRttSettingOn(PhoneAccountHandle handle) {
         int phoneId = SubscriptionManager.getPhoneId(
-                mPhoneAccountRegistrar.getSubscriptionIdForPhoneAccount(accountHandle));
+                mPhoneAccountRegistrar.getSubscriptionIdForPhoneAccount(handle));
         if (!SubscriptionManager.isValidPhoneId(phoneId)) {
             Log.w(this, "isRttSettingOn: Invalid phone id = " + phoneId);
             return false;
         }
-        return Settings.Secure.getInt(mContext.getContentResolver(),
+        boolean isRttModeSettingOn = Settings.Secure.getInt(mContext.getContentResolver(),
                 Settings.Secure.RTT_CALLING_MODE + convertRttPhoneId(phoneId), 0) != 0;
+        // If the carrier config says that we should ignore the RTT mode setting from the user,
+        // assume that it's off (i.e. only make an RTT call if it's requested through the extra).
+        boolean shouldIgnoreRttModeSetting = getCarrierConfigForPhoneAccount(handle)
+                .getBoolean(CarrierConfigManager.KEY_IGNORE_RTT_MODE_SETTING_BOOL, false);
+        return isRttModeSettingOn && !shouldIgnoreRttModeSetting;
+    }
+
+    private PersistableBundle getCarrierConfigForPhoneAccount(PhoneAccountHandle handle) {
+        int subscriptionId = mPhoneAccountRegistrar.getSubscriptionIdForPhoneAccount(handle);
+        CarrierConfigManager carrierConfigManager =
+                mContext.getSystemService(CarrierConfigManager.class);
+        PersistableBundle result = carrierConfigManager.getConfigForSubId(subscriptionId);
+        return result == null ? new PersistableBundle() : result;
     }
 
     private static String convertRttPhoneId(int phoneId) {

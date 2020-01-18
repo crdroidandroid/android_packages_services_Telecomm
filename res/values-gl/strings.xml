@@ -50,9 +50,9 @@
     <string name="change_default_dialer_dialog_affirmative" msgid="8606546663509166276">"Establecer como predeterminada"</string>
     <string name="change_default_dialer_dialog_negative" msgid="9078144617060173845">"Cancelar"</string>
     <string name="change_default_dialer_warning_message" msgid="1417671460801684999">"<xliff:g id="NEW_APP">%s</xliff:g> poderá facer chamadas e controlar todo o referente a estas. Só deberías establecer como aplicación de teléfono predeterminada aplicacións nas que confíes."</string>
-    <string name="change_default_call_screening_dialog_title" msgid="8714534302859934164">"Queres que <xliff:g id="NEW_APP">%s</xliff:g> sexa a app de filtro de chamadas predet.?"</string>
+    <string name="change_default_call_screening_dialog_title" msgid="8714534302859934164">"Usar <xliff:g id="NEW_APP">%s</xliff:g> como app de filtrado de chamadas predeterminada?"</string>
     <string name="change_default_call_screening_warning_message_for_disable_old_app" msgid="5128397581530600941">"<xliff:g id="OLD_APP">%s</xliff:g> xa non poderá filtrar chamadas."</string>
-    <string name="change_default_call_screening_warning_message" msgid="3881131132588596837">"<xliff:g id="NEW_APP">%s</xliff:g> poderá consultar a información sobre os emisores de chamadas, aínda que non figuren entre os teus contactos, así como bloquear as súas chamadas. Só deberías establecer como aplicación de filtro de chamadas predeterminada aplicacións nas que confíes."</string>
+    <string name="change_default_call_screening_warning_message" msgid="3881131132588596837">"<xliff:g id="NEW_APP">%s</xliff:g> poderá consultar a información sobre os emisores de chamadas, aínda que non figuren entre os teus contactos, así como bloquear as súas chamadas. Só deberías establecer como aplicación de filtrado de chamadas predeterminada aplicacións nas que confíes."</string>
     <string name="change_default_call_screening_dialog_affirmative" msgid="5503888845998386856">"Establecer como predeterminada"</string>
     <string name="change_default_call_screening_dialog_negative" msgid="3420459312464019224">"Cancelar"</string>
     <string name="blocked_numbers" msgid="2751843139572970579">"Números bloqueados"</string>
@@ -103,7 +103,7 @@
     <string name="phone_settings_payphone_txt" msgid="2493356957416981318">"Teléfono público"</string>
     <string name="phone_settings_payphone_summary_txt" msgid="6126709946103814653">"Bloquea as chamadas de teléfonos públicos"</string>
     <string name="phone_settings_unknown_txt" msgid="5836407031508172721">"Descoñecido"</string>
-    <string name="phone_settings_unknown_summary_txt" msgid="3457690230497753233">"Bloquea as chamadas de emisores non identificados"</string>
+    <string name="phone_settings_unknown_summary_txt" msgid="3457690230497753233">"Bloquear as chamadas de emisores non identificados"</string>
     <string name="phone_strings_call_blocking_turned_off_notification_title_txt" msgid="628536625775266096">"Bloqueo de chamadas"</string>
     <string name="phone_strings_call_blocking_turned_off_notification_text_txt" msgid="6264230048947693941">"Desactivouse o bloqueo de chamadas"</string>
     <string name="phone_strings_emergency_call_made_dialog_title_txt" msgid="7421611725400166580">"Realizouse unha chamada de emerxencia"</string>

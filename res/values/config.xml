@@ -51,7 +51,7 @@
     <!-- When true, a simple full intensity on/off vibration pattern will be used when calls ring.
          When false, a fancy vibration pattern which ramps up and down will be used.
          Devices should overlay this value based on the type of vibration hardware they employ. -->
-    <bool name="use_simple_vibration_pattern">false</bool>
+    <bool name="use_simple_vibration_pattern">true</bool>
 
     <!-- Threshold for the X+Y component of gravity needed for the device orientation to be
          classified as being on a user's ear. -->

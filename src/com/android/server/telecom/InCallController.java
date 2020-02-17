@@ -918,7 +918,7 @@ public class InCallController extends CallsManagerListenerBase {
             Settings.System.INCALL_FEEDBACK_VIBRATE, 0, UserHandle.USER_CURRENT) == 1;
 
         if (oldState == CallState.DIALING && newState == CallState.ACTIVE && vibrateOnStateChange) {
-            performHapticFeedback(VibrationEffect.get(VibrationEffect.EFFECT_THUD));
+            performHapticFeedback(VibrationEffect.get(VibrationEffect.EFFECT_CLICK));
         } else if (oldState == CallState.ACTIVE && newState == CallState.DISCONNECTED
                 && vibrateOnStateChange) {
             performHapticFeedback(VibrationEffect.get(VibrationEffect.EFFECT_DOUBLE_CLICK));

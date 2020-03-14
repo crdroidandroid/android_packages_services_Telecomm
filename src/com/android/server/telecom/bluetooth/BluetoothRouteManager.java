@@ -516,7 +516,7 @@ public class BluetoothRouteManager extends StateMachine {
                         "stuck?");
                 return false;
             }
-            return currentState != mAudioOffState;
+            return (currentState != mAudioOffState && mHearingAidActiveDeviceCache == null);
         } catch (InterruptedException e) {
             Log.w(LOG_TAG, "isBluetoothAudioConnectedOrPending -- interrupted getting state");
             return false;

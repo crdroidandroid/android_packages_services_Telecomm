@@ -1,7 +1,11 @@
 // Build the Telecom service.
 android_app {
     name: "Telecom",
-    libs: ["telephony-common"],
+    libs: [
+      "telephony-common",
+      "telephony-ext",
+      "ims-ext-common",
+    ],
     static_libs: [
         "org.lineageos.platform.internal",
         "org.lineageos.lib.phone",
@@ -57,6 +61,8 @@ android_test {
         "android.test.base",
         "android.test.runner",
         "telephony-common",
+        "telephony-ext",
+        "ims-ext-common",
     ],
 
     jni_libs: ["libdexmakerjvmtiagent"],

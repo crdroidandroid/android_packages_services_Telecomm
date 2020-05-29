@@ -238,8 +238,9 @@ public class InCallController extends CallsManagerListenerBase {
             Log.i(this, "Attempting to bind to InCall %s, with %s", mInCallServiceInfo, intent);
             mIsConnected = true;
             if (!mContext.bindServiceAsUser(intent, mServiceConnection,
-                        Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS,
+                        Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE |
+                        Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS |
+                        Context.BIND_ABOVE_CLIENT,
                         UserHandle.CURRENT)) {
                 Log.w(this, "Failed to connect.");
                 mIsConnected = false;

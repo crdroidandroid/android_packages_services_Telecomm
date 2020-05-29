@@ -38,6 +38,7 @@ import android.telephony.DisconnectCause;
 import android.text.TextUtils;
 
 import com.android.internal.annotations.VisibleForTesting;
+import com.android.internal.telephony.TelephonyProperties;
 import com.android.server.telecom.callredirection.CallRedirectionProcessor;
 
 // TODO: Needed for move to system service: import com.android.internal.R;
@@ -158,16 +159,24 @@ public class NewOutgoingCallIntentBroadcaster {
                                         " ignore the broadcast Call %s", mCall);
                         return;
                     }
-
-                    // TODO: Remove the assumption that phone numbers are either SIP or TEL.
-                    // This does not impact self-managed ConnectionServices as they do not use the
-                    // NewOutgoingCallIntentBroadcaster.
-                    Uri resultHandleUri = Uri.fromParts(
-                            mPhoneNumberUtilsAdapter.isUriNumber(resultNumber) ?
-                                    PhoneAccount.SCHEME_SIP : PhoneAccount.SCHEME_TEL,
-                            resultNumber, null);
-
+                    boolean isSkipSchemaParsing = mIntent.getBooleanExtra(
+                            TelephonyProperties.EXTRA_SKIP_SCHEMA_PARSING, false);
+                    Uri resultHandleUri = null;
                     Uri originalUri = mIntent.getData();
+                    if (isSkipSchemaParsing) {
+                        // resultNumber does not have the schema present
+                        // hence use originalUri which is same as handle
+                        resultHandleUri = Uri.fromParts(PhoneAccount.SCHEME_TEL,
+                                originalUri.toString(), null);
+                    } else {
+                        // TODO: Remove the assumption that phone numbers are either SIP or TEL.
+                        // This does not impact self-managed ConnectionServices as they do not use the
+                        // NewOutgoingCallIntentBroadcaster.
+                        resultHandleUri = Uri.fromParts(
+                                mPhoneNumberUtilsAdapter.isUriNumber(resultNumber) ?
+                                        PhoneAccount.SCHEME_SIP : PhoneAccount.SCHEME_TEL,
+                                resultNumber, null);
+                    }
 
                     if (originalUri.getSchemeSpecificPart().equals(resultNumber)) {
                         Log.v(this, "Call number unmodified after" +
@@ -315,13 +324,20 @@ public class NewOutgoingCallIntentBroadcaster {
     private String getNumberFromCallIntent(Intent intent) {
         String number;
         number = mPhoneNumberUtilsAdapter.getNumberFromIntent(intent, mContext);
-        if (TextUtils.isEmpty(number)) {
+        boolean isConferenceUri = intent.getBooleanExtra(
+                TelephonyProperties.EXTRA_DIAL_CONFERENCE_URI, false);
+        if (!isConferenceUri && TextUtils.isEmpty(number)) {
             Log.w(this, "Empty number obtained from the call intent.");
             return null;
         }
 
+        boolean isSkipSchemaParsing = intent.getBooleanExtra(
+                TelephonyProperties.EXTRA_SKIP_SCHEMA_PARSING, false);
+
         boolean isUriNumber = mPhoneNumberUtilsAdapter.isUriNumber(number);
-        if (!isUriNumber) {
+        Log.v(this,"processIntent isConferenceUri: " + isConferenceUri +
+                " isSkipSchemaParsing = " + isSkipSchemaParsing);
+        if (!isUriNumber && !isConferenceUri && !isSkipSchemaParsing) {
             number = mPhoneNumberUtilsAdapter.convertKeypadLettersToDigits(number);
             number = mPhoneNumberUtilsAdapter.stripSeparators(number);
         }
@@ -369,7 +385,12 @@ public class NewOutgoingCallIntentBroadcaster {
         if (disposition.sendBroadcast) {
             UserHandle targetUser = mCall.getInitiatingUser();
             Log.i(this, "Sending NewOutgoingCallBroadcast for %s to %s", mCall, targetUser);
-            broadcastIntent(mIntent, disposition.number,
+            boolean isSkipSchemaParsing = mIntent.getBooleanExtra(
+                    TelephonyProperties.EXTRA_SKIP_SCHEMA_PARSING, false);
+            String number = isSkipSchemaParsing
+                ? disposition.callingAddress.toString()
+                : disposition.number;
+            broadcastIntent(mIntent, number,
                     !disposition.callImmediately && !callRedirectionWithService, targetUser);
         }
     }

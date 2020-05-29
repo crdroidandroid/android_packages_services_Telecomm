@@ -330,5 +330,6 @@
             </intent-filter>
         </service>
 
+        <uses-library android:name="ims-ext-common"/>
     </application>
 </manifest>

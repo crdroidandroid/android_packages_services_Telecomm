@@ -636,6 +636,12 @@ public class PhoneAccountRegistrar {
         return getAllPhoneAccounts(mCurrentUserHandle);
     }
 
+    public List<PhoneAccountHandle> getEmergencyCallOnlyPhoneAccounts(String uriScheme,
+            UserHandle userHandle) {
+        return getPhoneAccountHandles(PhoneAccount.CAPABILITY_EMERGENCY_CALLS_ONLY,
+                0, uriScheme, null, false, userHandle);
+    }
+
     /**
      * Retrieves a list of all phone account call provider phone accounts supporting the
      * specified URI scheme.

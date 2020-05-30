@@ -85,30 +85,41 @@ public final class TelephonyUtil {
         }
     }
 
-    public static boolean isLocalEmergencyNumber(String address) {
-        IExtTelephony mIExtTelephony =
-            IExtTelephony.Stub.asInterface(ServiceManager.getService("extphone"));
-        boolean result = false;
+    private static IExtTelephony getIExtTelephony() {
         try {
-            result = mIExtTelephony.isLocalEmergencyNumber(address);
-        } catch (RemoteException ex) {
-            Log.e(LOG_TAG, ex, "RemoteException");
-        } catch (NullPointerException ex) {
-            Log.e(LOG_TAG, ex, "NullPointerException");
+            IExtTelephony ex = IExtTelephony.Stub.asInterface(ServiceManager.getService("extphone"));
+            return ex;
+        } catch (NoClassDefFoundError ex) {
+            return null;
+        }
+    }
+
+    public static boolean isLocalEmergencyNumber(String address) {
+        IExtTelephony mIExtTelephony = getIExtTelephony();
+        boolean result = false;
+        if (mIExtTelephony != null) {
+            try {
+                result = mIExtTelephony.isLocalEmergencyNumber(address);
+            } catch (RemoteException ex) {
+                Log.e(LOG_TAG, ex, "RemoteException");
+            } catch (NullPointerException ex) {
+                Log.e(LOG_TAG, ex, "NullPointerException");
+            }
         }
         return result;
     }
 
     public static boolean isPotentialLocalEmergencyNumber(String address) {
-        IExtTelephony mIExtTelephony =
-            IExtTelephony.Stub.asInterface(ServiceManager.getService("extphone"));
+        IExtTelephony mIExtTelephony = getIExtTelephony();
         boolean result = false;
-        try {
-            result = mIExtTelephony.isPotentialLocalEmergencyNumber(address);
-        } catch (RemoteException ex) {
-            Log.e(LOG_TAG, ex, "RemoteException");
-        } catch (NullPointerException ex) {
-            Log.e(LOG_TAG, ex, "NullPointerException");
+        if (mIExtTelephony != null) {
+            try {
+                result = mIExtTelephony.isPotentialLocalEmergencyNumber(address);
+            } catch (RemoteException ex) {
+                Log.e(LOG_TAG, ex, "RemoteException");
+            } catch (NullPointerException ex) {
+                Log.e(LOG_TAG, ex, "NullPointerException");
+            }
         }
         return result;
     }

@@ -225,8 +225,6 @@ public class BluetoothRouteManager extends StateMachine {
             sendMessageDelayed(CONNECTION_TIMEOUT, args,
                     mTimeoutsAdapter.getBluetoothPendingTimeoutMillis(
                             mContext.getContentResolver()));
-            // Pretend like audio is connected when communicating w/ CARSM.
-            mListener.onBluetoothAudioConnected();
         }
 
         @Override
@@ -518,7 +516,7 @@ public class BluetoothRouteManager extends StateMachine {
                         "stuck?");
                 return false;
             }
-            return currentState != mAudioOffState;
+            return (currentState != mAudioOffState && mHearingAidActiveDeviceCache == null);
         } catch (InterruptedException e) {
             Log.w(LOG_TAG, "isBluetoothAudioConnectedOrPending -- interrupted getting state");
             return false;

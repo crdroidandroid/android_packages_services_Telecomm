@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2013 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="telecommAppLabel" product="default">Stiùireadh nan gairmean</string>
+    <string name="notification_missedWorkCallTitle">Gairm na h-obrach a dh’fhalbh ort</string>
+    <string name="notification_missedCallsTitle">Gairmean a dh’fhalbh ort</string>
+    <string name="notification_missedCall_call_back">Fònaig air ais</string>
+    <string name="add_vm_number_str">Cuir àireamh ris</string>
+    <string name="change_default_dialer_dialog_title">An dèan thu aplacaid thùsail an fhònaidh dhe <xliff:g id="new_app">%s</xliff:g>?</string>
+    <string name="change_default_dialer_dialog_affirmative">Suidhich mar a’ bhun-roghainn</string>
+    <string name="change_default_dialer_dialog_negative">Sguir dheth</string>
+    <string name="change_default_dialer_warning_message">’S urrainn dha <xliff:g id="new_app">%s</xliff:g> gairmean a chur is gach nì mun dèidhinn a stiùireadh. Cha bu chòir dhut aplacaid a shuidheachadh mar tè thùsail an fhònaidh ach ma bhios earbsa agad innte.</string>
+    <string name="blocked_numbers">Àireamhan bacte</string>
+    <string name="blocked_numbers_msg">Chan fhaigh thu gairm no teachdaireachd on a h-àireamhan bacte.</string>
+    <string name="block_number">Cuir àireamh ris</string>
+    <string name="unblock_dialog_body">An dì-bhac thu <xliff:g id="number_to_block">%1$s</xliff:g>?</string>
+    <string name="unblock_button">Dì-bhac</string>
+    <string name="add_blocked_dialog_body">Bac gairmean is teacsaichean o</string>
+    <string name="add_blocked_number_hint">Àireamh fòn</string>
+    <string name="block_button">Bac</string>
+    <string name="non_primary_user">Cha sheall no stiùirich ach seilbheadair an uidheim na h-àireamhan bacte.</string>
+    <string name="delete_icon_description">Dì-bhac</string>
+    <string name="blocked_numbers_butter_bar_title">Tha am bacadh dheth rè seal</string>
+    <string name="blocked_numbers_butter_bar_body">Nuair a chuireas tu gairm no teacsa gu àireamh-èiginn, thèid am bacadh a chur dheth a dhèanamh cinnteach gun ruig na seirbheisean-èiginn thu.</string>
+    <string name="blocked_numbers_butter_bar_button">Cuir an comas a-rithist an-dràsta</string>
+    <string name="blocked_numbers_number_blocked_message">Chaidh <xliff:g id="blocked_number">%1$s</xliff:g> a bhacadh</string>
+    <string name="blocked_numbers_number_unblocked_message">Chaidh <xliff:g id="unblocked_number">%1$s</xliff:g> a dhì-bhacadh</string>
+    <string name="blocked_numbers_block_emergency_number_message">Cha ghabh àireamh-èiginn a bhacadh.</string>
+    <string name="blocked_numbers_number_already_blocked_message">Chaidh <xliff:g id="blocked_number">%1$s</xliff:g> a bhacadh cheana.</string>
+    <string name="toast_personal_call_msg">A’ cleachdadh an daithealair pearsanta airson na gairm</string>
+    <string name="notification_channel_missed_call">Gairmean a dh’fhalbh ort</string>
+    <string name="notification_channel_call_blocking">Bacadh ghairmean</string>
+    <string name="phone_settings_call_blocking_txt">Bacadh ghairmean</string>
+    <string name="phone_settings_number_not_in_contact_txt">Àireamhan nach eil ’nan luchd-aithne</string>
+    <string name="phone_settings_number_not_in_contact_summary_txt">Bac àireamhan nach deach a chlàradh san luchd-aithne agad</string>
+    <string name="phone_settings_private_num_txt">Prìobhaideach</string>
+    <string name="phone_settings_private_num_summary_txt">Bac luchd-gairm nach nochd an àireamh</string>
+    <string name="phone_settings_payphone_txt">Bothan-fòn</string>
+    <string name="phone_settings_payphone_summary_txt">Bac gairmean o bhothain-fhòn</string>
+    <string name="phone_settings_unknown_summary_txt">Bac gairmean o luchd-ghairm gun aithneachadh</string>
+    <string name="phone_strings_call_blocking_turned_off_notification_title_txt">Bacadh ghairmean</string>
+    <string name="phone_strings_call_blocking_turned_off_notification_text_txt">Chaidh bacadh ghairmean a chur à comas</string>
+    <string name="phone_strings_emergency_call_made_dialog_title_txt">Chaidh gairm-èiginn a dhèanamh</string>
+    <string name="phone_strings_emergency_call_made_dialog_call_blocking_text_txt">Chaidh bacadh ghairmean a chur à comas ach am faigh an luchd-cobharach grèim ort.</string>
+</resources>

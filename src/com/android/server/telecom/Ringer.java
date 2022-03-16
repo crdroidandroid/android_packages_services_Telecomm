@@ -21,19 +21,19 @@ import static android.provider.CallLog.Calls.USER_MISSED_LOW_RING_VOLUME;
 import static android.provider.CallLog.Calls.USER_MISSED_NO_VIBRATE;
 import static android.provider.Settings.Global.ZEN_MODE_OFF;
 
-import android.content.pm.PackageManager;
-import android.hardware.camera2.CameraManager;
-import android.os.AsyncTask;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Person;
+import android.database.ContentObserver;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.database.ContentObserver;
+import android.content.pm.PackageManager;
+import android.hardware.camera2.CameraManager;
 import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.VolumeShaper;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -179,16 +179,8 @@ public class Ringer {
         0,
     };
 
-    private static final long[] CALL_WAITING_VIBRATION_PATTERN = {
-            200,
-            300,
-            500,
-    };
-
-    private boolean mUseSimplePattern;
-    private int mVibrationPattern;
-    private SettingsObserver mSettingObserver;
-    private final Handler mH = new Handler();
+    private final boolean mUseSimplePattern;
+    private final SettingsObserver mSettingObserver;
 
     /**
      * Indicates that vibration should be repeated at element 5 in the {@link #PULSE_AMPLITUDE} and
@@ -282,13 +274,12 @@ public class Ringer {
         mRingtoneFactory = ringtoneFactory;
         mInCallController = inCallController;
         mVibrationEffectProxy = vibrationEffectProxy;
+        torchToggler = new TorchToggler(context);
         mUseSimplePattern = mContext.getResources().getBoolean(R.bool.use_simple_vibration_pattern);
-        mVibrationPattern = Settings.System.getIntForUser(mContext.getContentResolver(),
-            Settings.System.RINGTONE_VIBRATION_PATTERN, 0, UserHandle.USER_CURRENT);
 
         updateVibrationPattern();
 
-        mSettingObserver = new SettingsObserver(mH);
+        mSettingObserver = new SettingsObserver(getHandler());
         mContext.getContentResolver().registerContentObserver(
             Settings.System.getUriFor(Settings.System.RINGTONE_VIBRATION_PATTERN),
             true, mSettingObserver, UserHandle.USER_CURRENT);
@@ -298,8 +289,6 @@ public class Ringer {
 
         mIsHapticPlaybackSupportedByDevice =
                 mSystemSettingsUtil.isHapticPlaybackSupported(mContext);
-
-        torchToggler = new TorchToggler(context);
     }
 
     @VisibleForTesting
@@ -582,11 +571,9 @@ public class Ringer {
 
         stopRinging();
 
-       if (Settings.System.getIntForUser(mContext.getContentResolver(),
+        if (Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.VIBRATE_ON_CALLWAITING, 0, UserHandle.USER_CURRENT) == 1) {
-            if (mVibrator.hasVibrator()) {
-                mVibrator.vibrate(CALL_WAITING_VIBRATION_PATTERN, -1);
-            }
+            vibrate(200, 300, 500);
         }
 
         if (mCallWaitingPlayer == null) {
@@ -756,15 +743,6 @@ public class Ringer {
         return mHandler;
     }
 
-    @VisibleForTesting
-    public boolean waitForAttributesCompletion() throws InterruptedException {
-        if (mAttributesLatch != null) {
-            return mAttributesLatch.await(RINGER_ATTRIBUTES_TIMEOUT, TimeUnit.MILLISECONDS);
-        } else {
-            return false;
-        }
-    }
-
     private class TorchToggler extends AsyncTask {
 
         private CameraManager cameraManager;
@@ -804,11 +782,27 @@ public class Ringer {
         }
     }
 
+    public void vibrate(int v1, int p1, int v2) {
+        long[] pattern = new long[] {
+            0, v1, p1, v2
+        };
+        ((Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(pattern, -1);
+    }
+
+    @VisibleForTesting
+    public boolean waitForAttributesCompletion() throws InterruptedException {
+        if (mAttributesLatch != null) {
+            return mAttributesLatch.await(RINGER_ATTRIBUTES_TIMEOUT, TimeUnit.MILLISECONDS);
+        } else {
+            return false;
+	}
+    }
+
     private void updateVibrationPattern() {
-        mVibrationPattern = Settings.System.getIntForUser(mContext.getContentResolver(),
-            Settings.System.RINGTONE_VIBRATION_PATTERN, 0, UserHandle.USER_CURRENT);
         if (mUseSimplePattern) {
-            switch (mVibrationPattern) {
+            final int pattern = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.RINGTONE_VIBRATION_PATTERN, 0, UserHandle.USER_CURRENT);
+            switch (pattern) {
                 case 1:
                     mDefaultVibrationEffect = mVibrationEffectProxy.createWaveform(DZZZ_DA_VIBRATION_PATTERN,
                         FIVE_ELEMENTS_VIBRATION_AMPLITUDE, REPEAT_SIMPLE_VIBRATION_AT);
@@ -839,22 +833,35 @@ public class Ringer {
                         customVib[1] = "800";
                         customVib[2] = "800";
                     }
-                    long[] vibPattern = {
-                        0, // No delay before starting
-                        Long.parseLong(customVib[0]), // How long to vibrate
-                        400, // Delay
-                        Long.parseLong(customVib[1]), // How long to vibrate
-                        400, // Delay
-                        Long.parseLong(customVib[2]), // How long to vibrate
-                        400, // How long to wait before vibrating again
-                    };
+                    long[] vibPattern;
+                    try {
+                        vibPattern = new long[] {
+                            0, // No delay before starting
+                            Long.parseLong(customVib[0]), // How long to vibrate
+                            400, // Delay
+                            Long.parseLong(customVib[1]), // How long to vibrate
+                            400, // Delay
+                            Long.parseLong(customVib[2]), // How long to vibrate
+                            400, // How long to wait before vibrating again
+                        };
+                    } catch (NumberFormatException e) {
+                        Log.e(this, e, "Corrupt custom vibration pattern setting value, fallback to default");
+                        vibPattern = new long[] {
+                            0, // No delay before starting
+                            0, // How long to vibrate
+                            400, // Delay
+                            800, // How long to vibrate
+                            400, // Delay
+                            800, // How long to vibrate
+                            400, // How long to wait before vibrating again
+                        };
+                    }
                     mDefaultVibrationEffect = mVibrationEffectProxy.createWaveform(vibPattern,
                             SEVEN_ELEMENTS_VIBRATION_AMPLITUDE, REPEAT_SIMPLE_VIBRATION_AT);
                     break;
                 default:
                     mDefaultVibrationEffect = mVibrationEffectProxy.createWaveform(SIMPLE_VIBRATION_PATTERN,
                         FIVE_ELEMENTS_VIBRATION_AMPLITUDE, REPEAT_SIMPLE_VIBRATION_AT);
-                    break;
             }
         } else {
             mDefaultVibrationEffect = mVibrationEffectProxy.createWaveform(PULSE_PATTERN,

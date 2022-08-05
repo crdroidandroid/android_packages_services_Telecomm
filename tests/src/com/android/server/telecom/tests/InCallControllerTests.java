@@ -149,6 +149,10 @@ public class InCallControllerTests extends TelecomTestCase {
     private TelecomSystem.SyncRoot mLock = new TelecomSystem.SyncRoot() {};
     private EmergencyCallHelper mEmergencyCallHelper;
 
+    private final int serviceBindingFlags = Context.BIND_AUTO_CREATE
+        | Context.BIND_FOREGROUND_SERVICE | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS
+        | Context.BIND_SCHEDULE_LIKE_TOP_APP;
+
     @Override
     @Before
     public void setUp() throws Exception {
@@ -232,8 +236,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         Intent bindIntent = bindIntentCaptor.getValue();
@@ -267,8 +270,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         Intent bindIntent = bindIntentCaptor.getValue();
@@ -319,8 +321,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(1)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         Intent bindIntent = bindIntentCaptor.getValue();
@@ -350,8 +351,7 @@ public class InCallControllerTests extends TelecomTestCase {
         when(mDefaultDialerCache.getDefaultDialerApplication(CURRENT_USER_ID))
                 .thenReturn(DEF_PKG);
         when(mMockContext.bindServiceAsUser(any(Intent.class), any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT))).thenReturn(true);
         when(mTimeoutsAdapter.getEmergencyCallbackWindowMillis(any(ContentResolver.class)))
                 .thenReturn(300_000L);
@@ -378,8 +378,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(1)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         Intent bindIntent = bindIntentCaptor.getValue();
@@ -428,8 +427,7 @@ public class InCallControllerTests extends TelecomTestCase {
         ArgumentCaptor<ServiceConnection> serviceConnectionCaptor =
                 ArgumentCaptor.forClass(ServiceConnection.class);
         when(mMockContext.bindServiceAsUser(any(Intent.class), serviceConnectionCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT))).thenReturn(true);
         when(mTimeoutsAdapter.getEmergencyCallbackWindowMillis(any(ContentResolver.class)))
                 .thenReturn(300_000L);
@@ -456,8 +454,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(1)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         Intent bindIntent = bindIntentCaptor.getValue();
@@ -486,8 +483,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(2)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         // Verify we were re-granted the runtime permission.
@@ -540,8 +536,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(1)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 serviceConnectionCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         Intent bindIntent = bindIntentCaptor.getValue();
@@ -573,8 +568,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(2)).bindServiceAsUser(
                 bindIntentCaptor2.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         bindIntent = bindIntentCaptor2.getValue();
@@ -630,8 +624,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(2)).bindServiceAsUser(
                 bindIntentCaptor2.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
         assertEquals(sysDialerComponentName, bindIntentCaptor2.getValue().getComponent());
     }
@@ -664,8 +657,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(1)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         Intent bindIntent = bindIntentCaptor.getValue();
@@ -703,8 +695,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(1)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 serviceConnectionCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         // Pretend that the call has gone away.
@@ -752,8 +743,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(1)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
         // Verify bind car mode ui
         assertEquals(1, bindIntentCaptor.getAllValues().size());
@@ -781,8 +771,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(1)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
         // Verify bind to default package, instead of the invalid car mode ui.
         assertEquals(1, bindIntentCaptor.getAllValues().size());
@@ -808,8 +797,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(1)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 serviceConnectionCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
         assertEquals(1, bindIntentCaptor.getAllValues().size());
         verifyBinding(bindIntentCaptor, 0, DEF_PKG, DEF_CLASS);
@@ -854,8 +842,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(4)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
         // Verify bind car mode ui
         assertEquals(4, bindIntentCaptor.getAllValues().size());
@@ -912,8 +899,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(2)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 serviceConnectionCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         CompletableFuture<Boolean> bindTimeout = mInCallController.getBindingFuture();
@@ -981,8 +967,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, never()).bindServiceAsUser(
                 any(Intent.class),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         // Now switch to car mode.
@@ -994,8 +979,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(1)).bindServiceAsUser(
                 bindIntentCaptor.capture(),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
         // Verify bind car mode ui
         assertEquals(1, bindIntentCaptor.getAllValues().size());
@@ -1021,8 +1005,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, never()).bindServiceAsUser(
                 any(Intent.class),
                 any(ServiceConnection.class),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         // Now switch to car mode.
@@ -1039,8 +1022,7 @@ public class InCallControllerTests extends TelecomTestCase {
         verify(mMockContext, times(1)).bindServiceAsUser(
                 any(Intent.class),
                 serviceConnectionCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_FOREGROUND_SERVICE
-                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                eq(serviceBindingFlags),
                 eq(UserHandle.CURRENT));
 
         ServiceConnection serviceConnection = serviceConnectionCaptor.getValue();

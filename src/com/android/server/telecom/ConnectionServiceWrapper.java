@@ -2097,6 +2097,7 @@ public class ConnectionServiceWrapper extends ServiceBinder implements
         BindCallback callback = new BindCallback() {
             @Override
             public void onSuccess() {
+                if (!isServiceValid("connectionServiceFocusLost")) return;
                 try {
                     mServiceInterface.connectionServiceFocusLost(
                             Log.getExternalSession(TELECOM_ABBREVIATION));
@@ -2116,6 +2117,7 @@ public class ConnectionServiceWrapper extends ServiceBinder implements
         BindCallback callback = new BindCallback() {
             @Override
             public void onSuccess() {
+                if (!isServiceValid("connectionServiceFocusGained")) return;
                 try {
                     mServiceInterface.connectionServiceFocusGained(
                             Log.getExternalSession(TELECOM_ABBREVIATION));

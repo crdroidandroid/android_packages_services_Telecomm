@@ -310,8 +310,8 @@ public class TransactionTests extends TelecomTestCase {
 
         // simulate the transaction being processed and the setOnHold() being called / state change
         t.processTransaction(null);
-        t.getCallStateListenerImpl().onCallStateChanged(CallState.ON_HOLD);
         when(mMockCall1.getState()).thenReturn(CallState.ON_HOLD);
+        t.getCallStateListenerImpl().onCallStateChanged(CallState.ON_HOLD);
 
         // THEN
         verify(mMockCall1, times(1)).addCallStateListener(t.getCallStateListenerImpl());

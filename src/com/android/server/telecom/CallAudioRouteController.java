@@ -1327,8 +1327,8 @@ public class CallAudioRouteController implements CallAudioRouteAdapter {
         }
 
         // Get corresponding audio route
-        @AudioRoute.AudioRouteType int type = DEVICE_INFO_TYPE_TO_AUDIO_ROUTE_TYPE.get(
-                deviceAttr.getType());
+        @AudioRoute.AudioRouteType int type = DEVICE_INFO_TYPE_TO_AUDIO_ROUTE_TYPE.getOrDefault(
+                deviceAttr.getType(), TYPE_INVALID);
         AudioDeviceInfo currentCommunicationDevice = null;
         if (mFeatureFlags.updatePreferredAudioDeviceLogic()) {
             currentCommunicationDevice = getCurrentCommunicationDevice();

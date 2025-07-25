@@ -4428,7 +4428,7 @@ public class CallsManager extends Call.ListenerBase
                 } else {
                     Log.addEvent(ringingCall, LogUtils.Events.INFO,
                             "media btn short press - answer call.");
-                    answerCall(ringingCall, VideoProfile.STATE_AUDIO_ONLY);
+                    answerCall(ringingCall, ringingCall.getVideoState());
                     return true;
                 }
             } else if (HeadsetMediaButton.LONG_PRESS == type) {

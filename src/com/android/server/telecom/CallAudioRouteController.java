@@ -1219,14 +1219,7 @@ public class CallAudioRouteController implements CallAudioRouteAdapter {
             }
             case RINGING_FOCUS -> {
                 if (!mIsActive) {
-                    AudioRoute route = getBaseRoute(true, null);
-                    // Use the current route for handling ringing focus when the flag is enabled
-                    // unless the preferred device route is set as indicated by the audio fwk. We
-                    // don't want to override this selection if the user had set a default audio
-                    // route for calls.
-                    if (mFeatureFlags.preserveCallAudioRouting() && !isPreferredDeviceSet()) {
-                        route = getCurrentOrPendingRoute();
-                    }
+                    AudioRoute route = getRingingFocusRoute();
                     BluetoothDevice device = mBluetoothRoutes.get(route);
                     // Check if in-band ringtone is enabled for the device; if it isn't, move to
                     // inactive route.
@@ -1729,6 +1722,22 @@ public class CallAudioRouteController implements CallAudioRouteAdapter {
      */
     public AudioRoute getCurrentOrPendingRoute() {
         return mIsPending ? mPendingAudioRoute.getDestRoute() : mCurrentRoute;
+    }
+
+    private AudioRoute getRingingFocusRoute() {
+        AudioRoute route = getBaseRoute(true, null);
+        if (!mFeatureFlags.preserveCallAudioRouting() || isPreferredDeviceSet()) {
+            return route;
+        }
+        AudioRoute currentRoute = getCurrentOrPendingRoute();
+        return shouldUseBaselineForRinging(route, currentRoute) ? route : currentRoute;
+    }
+
+    private boolean shouldUseBaselineForRinging(AudioRoute route, AudioRoute currentRoute) {
+        return route != null
+                && BT_AUDIO_ROUTE_TYPES.contains(route.getType())
+                && (currentRoute == null || currentRoute.equals(DUMMY_ROUTE)
+                        || currentRoute.getType() == AudioRoute.TYPE_EARPIECE);
     }
 
     public AudioRoute getBluetoothRoute(@AudioRoute.AudioRouteType int audioRouteType,
